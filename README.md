@@ -21,47 +21,49 @@
 
 ## :open_file_folder: 프로젝트 구조
 
+## 📂 프로젝트 구조
+
+``` bash
 parking_project/
-├── api/ # 공공데이터 API 수집
-│ └── parking_api.py
+├── api/                        # 공공데이터 API 수집
+│   └── parking_api.py
 │
-├── crawler/ # Selenium 크롤링
-│ └── review.py
+├── crawler/                   # Selenium 크롤링
+│   └── review.py
 │
-├── preprocessing/ # 데이터 전처리
-│ ├── api_preprocess.py
-│ ├── review_preprocess.py
-│ └── merge.py
+├── preprocessing/            # 데이터 전처리
+│   ├── api_preprocess.py
+│   ├── review_preprocess.py
+│   └── merge.py
 │
-├── database/ # DB 연결
-│ ├── connection.py
-│ └── select_data.py
+├── database/                 # DB 연결
+│   ├── connection.py
+│   └── select_data.py
 │
-├── streamlit/ # 대시보드
-│ ├── app.py # 메인 실행 파일
-│ └── pages/
-│ ├── map_view.py
-│ ├── congestion.py
-│ └── analysis.py
+├── streamlit/                # 대시보드
+│   ├── app.py                # 메인 실행 파일
+│   └── pages/
+│       ├── map_view.py
+│       ├── congestion.py
+│       └── analysis.py
 │
-├── utils/ # 공통 함수
-│ ├── scoring.py # 혼잡도 점수 계산
-│ └── helpers.py
+├── utils/                   # 공통 함수
+│   ├── scoring.py          # 혼잡도 점수 계산
+│   └── helpers.py
 │
 ├── data/
-│ ├── raw/ # API / 크롤링 원본 데이터
-│ └── processed/ # 전처리 완료 데이터
+│   ├── raw/                # API / 크롤링 원본 데이터
+│   └── processed/         # 전처리 완료 데이터
 │
-├── logs/ # 실행 로그
-├── tests/ # 테스트 코드 (선택)
-├── notebooks/ # 분석 실험 (선택)
+├── logs/                   # 실행 로그
+├── tests/                  # 테스트 코드 (선택)
+├── notebooks/              # 분석 실험 (선택)
 │
-├── .env # API KEY / DB 정보 (절대 Git 업로드 금지)
+├── .env                    # API KEY / DB 정보 (Git 업로드 금지)
 ├── .gitignore
 ├── requirements.txt
 ├── README.md
 └── config.py
-
 ---
 
 ## :rocket: 실행 방법
@@ -69,9 +71,8 @@ parking_project/
 ### 1. 저장소 다운로드
 
 ```bash
-git clone <repository_url>
-cd parking_project
-```
+git clone https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN34-1st-6Team.git
+cd SKN34-1st-6Team
 
 ### 2. 가상환경 생성
 
