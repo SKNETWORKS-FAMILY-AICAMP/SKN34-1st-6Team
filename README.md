@@ -65,7 +65,7 @@ parking_project/
 ├── README.md
 └── config.py
 ---
-
+```
 ## :rocket: 실행 방법
 
 ### 1. 저장소 다운로드
@@ -73,7 +73,7 @@ parking_project/
 ```bash
 git clone https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN34-1st-6Team.git
 cd SKN34-1st-6Team
-
+```
 ### 2. 가상환경 생성
 
 ```bash
