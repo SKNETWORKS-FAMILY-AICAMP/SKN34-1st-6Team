@@ -1,0 +1,11 @@
+# 1. 테이블 생성
+python database/create_table.py
+
+# 2. 공영주차장 수집
+python api/parking_api.py
+
+# 3. 난이도 점수 + 역세권 계산
+python preprocessing/api_preprocess.py
+
+# 4. DB 적재
+python database/insert_api.py

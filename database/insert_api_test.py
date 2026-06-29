@@ -5,7 +5,7 @@ data/processed/parking_scored_*.csv → DB 3개 테이블 적재
 
 순서:
   1. subway_station  지하철역 좌표
-  2. parking         기본정보 + 실시간 현황
+  2. parking         기본정보
   3. parking_score   난이도 점수 + 혼잡도
 
 실행:
@@ -18,7 +18,22 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import csv
 from datetime import datetime
 from pathlib import Path
-from utils.db import get_connection
+
+import pymysql
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def get_connection():
+    return pymysql.connect(
+        host     = os.getenv("DB_HOST", "localhost"),
+        port     = int(os.getenv("DB_PORT", 3306)),
+        user     = os.getenv("DB_USER"),
+        password = os.getenv("DB_PASSWORD"),
+        db       = os.getenv("DB_NAME"),
+        charset  = "utf8mb4",
+        autocommit = False,
+    )
 
 PROCESSED_DIR = Path("data/processed")
 RAW_DIR       = Path("data/raw")
@@ -82,10 +97,8 @@ def insert_subway(conn, rows: list[dict]) -> dict[str, int]:
     """지하철역 적재 → {역명: id} 반환"""
     print("\n【1】 subway_station 적재")
 
-    # scored CSV 의 최근접역명/호선에서 고유 역 목록 추출
     seen, stations = set(), []
 
-    # subway_stations.csv 가 있으면 좌표 포함해서 적재
     coord_map: dict[str, tuple] = {}
     if SUBWAY_CSV.exists():
         with open(SUBWAY_CSV, encoding="utf-8-sig") as f:
@@ -115,7 +128,6 @@ def insert_subway(conn, rows: list[dict]) -> dict[str, int]:
         print("  ⚠️  CSV에 최근접역명 없음 → 건너뜀")
         return {}
 
-    # 좌표 없는 역도 일단 적재 (subway_stations.csv 없는 경우)
     no_coord = sum(1 for s in stations if not s["latitude"])
     if no_coord:
         print(f"  ⚠️  좌표 없는 역 {no_coord}개 → 역명/호선만 적재")
@@ -141,7 +153,6 @@ def insert_parking(conn, rows: list[dict]):
     for row in rows:
         pk_code = _s(row.get("pk_code"))
         if not pk_code or pk_code == "nan":
-            # pk_code가 숫자형으로 저장된 경우 (1013181.0 → "1013181")
             raw = row.get("pk_code", "")
             try:
                 pk_code = str(int(float(raw)))
@@ -151,45 +162,32 @@ def insert_parking(conn, rows: list[dict]):
             continue
 
         records.append({
-            "pk_code":          pk_code,
-            "pk_name":          _s(row.get("pk_name")),
-            "pk_address":       _s(row.get("pk_address")),
-            "phone":            _s(row.get("phone")),
-            "pk_type_cd":       _s(row.get("pk_type_cd")),
-            "pk_type_nm":       _s(row.get("pk_type_nm")),
-            "oper_se":          _s(row.get("oper_se")),
-            "oper_se_nm":       _s(row.get("oper_se_nm")),
-            "fee_type":         _s(row.get("fee_type")),
-            "parking_space":    _i(row.get("parking_space")),
-            "basic_fee":        _f(row.get("basic_fee")),
-            "basic_time":       _f(row.get("basic_time")),
-            "extra_fee":        _f(row.get("extra_fee")),
-            "extra_time":       _f(row.get("extra_time")),
-            "daily_max_fee":    _f(row.get("daily_max_fee")),
-            "monthly_fee":      _f(row.get("monthly_fee")),
-            "weekday_start":    _s(row.get("weekday_start")),
-            "weekday_end":      _s(row.get("weekday_end")),
-            "weekend_start":    _s(row.get("weekend_start")),
-            "weekend_end":      _s(row.get("weekend_end")),
-            "holi_start":       _s(row.get("holi_start")),
-            "holi_end":         _s(row.get("holi_end")),
-            "latitude":         _f(row.get("latitude")),
-            "longitude":        _f(row.get("longitude")),
-            "coord_src":        _s(row.get("coord_src")),
-            # 실시간 현황
-            "prk_stts_yn":      _i(row.get("PRK_STTS_YN")),
-            "prk_stts_nm":      _s(row.get("PRK_STTS_NM")),
-            "now_prk_vhcl_cnt": _i(row.get("NOW_PRK_VHCL_CNT")),
-            "now_prk_updt_tm":  _dt(row.get("NOW_PRK_VHCL_UPDT_TM")),
-            "pay_yn":           _s(row.get("PAY_YN")),
-            "nght_pay_yn":      _s(row.get("NGHT_PAY_YN")),
-            "prd_amt":          _f(row.get("PRD_AMT")),
-            "day_max_crg":      _f(row.get("DAY_MAX_CRG")),
-            "sat_chgd_free_se": _s(row.get("SAT_CHGD_FREE_SE")),
-            "lhldy_chgd_free":  _s(row.get("LHLDY_CHGD_FREE_SE")),
-            "shrn_pklt_yn":     _s(row.get("SHRN_PKLT_YN")),
-            "shrn_pklt_url":    _s(row.get("SHRN_PKLT_MNG_URL")),
-            "collected_at":     _dt(row.get("collected_at")),
+            "pk_code":       pk_code,
+            "pk_name":       _s(row.get("pk_name")),
+            "pk_address":    _s(row.get("pk_address")),
+            "phone":         _s(row.get("phone")),
+            "pk_type_cd":    _s(row.get("pk_type_cd")),
+            "pk_type_nm":    _s(row.get("pk_type_nm")),
+            "oper_se":       _s(row.get("oper_se")),
+            "oper_se_nm":    _s(row.get("oper_se_nm")),
+            "fee_type":      _s(row.get("fee_type")),
+            "parking_space": _i(row.get("parking_space")),
+            "basic_fee":     _f(row.get("basic_fee")),
+            "basic_time":    _f(row.get("basic_time")),
+            "extra_fee":     _f(row.get("extra_fee")),
+            "extra_time":    _f(row.get("extra_time")),
+            "daily_max_fee": _f(row.get("daily_max_fee")),
+            "monthly_fee":   _f(row.get("monthly_fee")),
+            "weekday_start": _s(row.get("weekday_start")),
+            "weekday_end":   _s(row.get("weekday_end")),
+            "weekend_start": _s(row.get("weekend_start")),
+            "weekend_end":   _s(row.get("weekend_end")),
+            "holi_start":    _s(row.get("holi_start")),
+            "holi_end":      _s(row.get("holi_end")),
+            "latitude":      _f(row.get("latitude")),
+            "longitude":     _f(row.get("longitude")),
+            "coord_src":     _s(row.get("coord_src")),
+            "collected_at":  _dt(row.get("collected_at")),
         })
 
     sql = """
@@ -198,11 +196,7 @@ def insert_parking(conn, rows: list[dict]):
             oper_se, oper_se_nm, fee_type, parking_space,
             basic_fee, basic_time, extra_fee, extra_time, daily_max_fee, monthly_fee,
             weekday_start, weekday_end, weekend_start, weekend_end, holi_start, holi_end,
-            latitude, longitude, coord_src,
-            prk_stts_yn, prk_stts_nm, now_prk_vhcl_cnt, now_prk_updt_tm,
-            pay_yn, nght_pay_yn, prd_amt, day_max_crg,
-            sat_chgd_free_se, lhldy_chgd_free, shrn_pklt_yn, shrn_pklt_url,
-            collected_at
+            latitude, longitude, coord_src, collected_at
         ) VALUES (
             %(pk_code)s, %(pk_name)s, %(pk_address)s, %(phone)s,
             %(pk_type_cd)s, %(pk_type_nm)s, %(oper_se)s, %(oper_se_nm)s,
@@ -211,11 +205,7 @@ def insert_parking(conn, rows: list[dict]):
             %(daily_max_fee)s, %(monthly_fee)s,
             %(weekday_start)s, %(weekday_end)s, %(weekend_start)s, %(weekend_end)s,
             %(holi_start)s, %(holi_end)s,
-            %(latitude)s, %(longitude)s, %(coord_src)s,
-            %(prk_stts_yn)s, %(prk_stts_nm)s, %(now_prk_vhcl_cnt)s, %(now_prk_updt_tm)s,
-            %(pay_yn)s, %(nght_pay_yn)s, %(prd_amt)s, %(day_max_crg)s,
-            %(sat_chgd_free_se)s, %(lhldy_chgd_free)s, %(shrn_pklt_yn)s, %(shrn_pklt_url)s,
-            %(collected_at)s
+            %(latitude)s, %(longitude)s, %(coord_src)s, %(collected_at)s
         )
         ON DUPLICATE KEY UPDATE
             pk_name=VALUES(pk_name), pk_address=VALUES(pk_address),
@@ -223,8 +213,7 @@ def insert_parking(conn, rows: list[dict]):
             basic_fee=VALUES(basic_fee), extra_fee=VALUES(extra_fee),
             daily_max_fee=VALUES(daily_max_fee), monthly_fee=VALUES(monthly_fee),
             latitude=VALUES(latitude), longitude=VALUES(longitude),
-            prk_stts_yn=VALUES(prk_stts_yn), now_prk_vhcl_cnt=VALUES(now_prk_vhcl_cnt),
-            now_prk_updt_tm=VALUES(now_prk_updt_tm), collected_at=VALUES(collected_at)
+            collected_at=VALUES(collected_at)
     """
     batch_insert(conn, sql, records, "parking")
 
@@ -246,8 +235,6 @@ def insert_score(conn, rows: list[dict], station_map: dict[str, int]):
         if not pk_code:
             continue
 
-        # 혼잡도 구간별 집계 (구간 내 최고값)
-        # 우선순위: 혼잡 > 보통 > 여유
         PRIORITY = {"혼잡": 2, "보통": 1, "여유": 0}
 
         def peak(hours, prefix):
@@ -290,13 +277,10 @@ def insert_score(conn, rows: list[dict], station_map: dict[str, int]):
         print("  ⚠️  적재할 score 데이터 없음 → 건너뜀")
         return
 
-    # 동적 컬럼 목록
     cols = list(records[0].keys())
-    col_str  = ", ".join(f"`{c}`" for c in cols)
-    val_str  = ", ".join(f"%({c})s" for c in cols)
-    upd_str  = ", ".join(
-        f"`{c}`=VALUES(`{c}`)" for c in cols if c != "pk_code"
-    )
+    col_str = ", ".join(f"`{c}`" for c in cols)
+    val_str = ", ".join(f"%({c})s" for c in cols)
+    upd_str = ", ".join(f"`{c}`=VALUES(`{c}`)" for c in cols if c != "pk_code")
     sql = f"""
         INSERT INTO parking_score ({col_str})
         VALUES ({val_str})
@@ -313,7 +297,6 @@ def main():
     print("  🅿️  주차장 데이터 → MySQL 적재")
     print("=" * 55)
 
-    # scored CSV 우선, 없으면 raw CSV
     csv_path = find_latest("data/processed/parking_scored_*.csv")
     if not csv_path:
         csv_path = find_latest("data/raw/parking_raw_*.csv")

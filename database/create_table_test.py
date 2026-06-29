@@ -53,26 +53,11 @@ CREATE TABLE IF NOT EXISTS `parking` (
     `latitude`          DECIMAL(10,7)   DEFAULT NULL        COMMENT '위도',
     `longitude`         DECIMAL(10,7)   DEFAULT NULL        COMMENT '경도',
     `coord_src`         VARCHAR(10)     DEFAULT NULL        COMMENT '좌표출처',
-    -- 실시간 현황 (NULL = 미연계)
-    `prk_stts_yn`       TINYINT         DEFAULT NULL        COMMENT '실시간연계여부(1=연계,0=미연계)',
-    `prk_stts_nm`       VARCHAR(100)    DEFAULT NULL        COMMENT '실시간연계상태명',
-    `now_prk_vhcl_cnt`  INT             DEFAULT NULL        COMMENT '현재주차대수(NULL=미연계)',
-    `now_prk_updt_tm`   DATETIME        DEFAULT NULL        COMMENT '실시간갱신시각',
-    -- 부가정보
-    `pay_yn`            CHAR(1)         DEFAULT NULL        COMMENT '유료여부',
-    `nght_pay_yn`       CHAR(1)         DEFAULT NULL        COMMENT '야간유료여부',
-    `prd_amt`           DECIMAL(10,2)   DEFAULT NULL        COMMENT '정기권요금',
-    `day_max_crg`       DECIMAL(10,2)   DEFAULT NULL        COMMENT '일최대요금(실시간)',
-    `sat_chgd_free_se`  CHAR(1)         DEFAULT NULL        COMMENT '토요일무료여부',
-    `lhldy_chgd_free`   CHAR(1)         DEFAULT NULL        COMMENT '공휴일무료여부',
-    `shrn_pklt_yn`      CHAR(1)         DEFAULT NULL        COMMENT '공유주차장여부',
-    `shrn_pklt_url`     VARCHAR(255)    DEFAULT NULL        COMMENT '공유주차앱URL',
     `collected_at`      DATETIME        DEFAULT NULL        COMMENT '수집일시',
     PRIMARY KEY (`pk_code`),
     INDEX `idx_address`   (`pk_address`(100)),
     INDEX `idx_location`  (`latitude`, `longitude`),
-    INDEX `idx_fee`       (`basic_fee`),
-    INDEX `idx_realtime`  (`prk_stts_yn`)
+    INDEX `idx_fee`       (`basic_fee`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='주차장 기본정보'
 """
 

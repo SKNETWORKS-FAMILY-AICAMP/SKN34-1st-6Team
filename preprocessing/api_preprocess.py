@@ -196,10 +196,10 @@ def calc_score(row: dict, dist_m) -> dict:
 
     total = fee_score + cap_score + subway_score
     grade = (
-        "매우어려움" if total >= 80 else
-        "어려움"     if total >= 55 else
-        "보통"       if total >= 30 else
-        "쉬움"
+        "D" if total >= 80 else
+        "C"     if total >= 55 else
+        "B"       if total >= 30 else
+        "A"
     )
     return {
         "요금점수":   fee_score,
@@ -294,7 +294,7 @@ def main():
     print(f"\n【 추가된 컬럼 】")
     print(f"   역세권 : 최근접역명, 최근접역호선, 최근접역거리(m), 역세권여부")
     print(f"   난이도 : 요금점수(0~40) + 면수점수(0~30) + 역세권점수(0~30) = 난이도점수(0~100)")
-    print(f"   등급   : 쉬움(<30) / 보통(30~54) / 어려움(55~79) / 매우어려움(80+)")
+    print(f"   등급   : A(<30) / B(30~54) / C(55~79) / D(80+)")
     print(f"   혼잡도 : 평일 24시간 + 주말 24시간 (패턴 기반)")
 
     return str(output)
