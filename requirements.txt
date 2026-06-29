@@ -22,6 +22,7 @@ streamlit-folium       # Streamlit에서 folium 지도 안정적으로 렌더링
 # 데이터베이스 (MySQL)
 mysql-connector-python # MySQL 연결 드라이버
 SQLAlchemy             # DB ORM 및 쿼리 관리
+pymysql                #연결드라이버
 
 
 #  환경변수 관리

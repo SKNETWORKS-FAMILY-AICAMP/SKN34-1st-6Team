@@ -1,0 +1,29 @@
+# 가상환경 (venv)
+venv/
+env/
+.venv/
+parking_venv/
+
+# Python 캐시 파일
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 환경변수 파일
+.env
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+
+# IDE 설정 (VSCode)
+.vscode/
+
+
+# 로그 파일
+*.log
