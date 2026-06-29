@@ -66,7 +66,7 @@ def _f(v):
         return None
 
 def find_latest_raw() -> Path | None:
-    files = sorted(RAW_DIR.glob("parking_raw_*.csv"), key=lambda f: f.stat().st_mtime, reverse=True)
+    files = sorted(RAW_DIR.glob("parking_raw.csv"), key=lambda f: f.stat().st_mtime, reverse=True)
     return files[0] if files else None
 
 
@@ -76,7 +76,7 @@ def find_latest_raw() -> Path | None:
 def find_subway_csv() -> Path | None:
     """
     data/raw/ 안에서 subway CSV를 자동으로 찾는다.
-    우선순위: subway_stations.csv → subway_station_*.csv (최신순)
+    우선순위: subway_stations.csv → subway_station.csv (최신순)
     """
     # 1순위: 기본 파일명
     fixed = RAW_DIR / "subway_stations.csv"
@@ -85,7 +85,7 @@ def find_subway_csv() -> Path | None:
 
     # 2순위: subway_station_*.csv 패턴
     candidates = sorted(
-        RAW_DIR.glob("subway_station*.csv"),
+        RAW_DIR.glob("subway_station.csv"),
         key=lambda f: f.stat().st_mtime,
         reverse=True
     )

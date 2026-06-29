@@ -297,9 +297,9 @@ def main():
     print("  🅿️  주차장 데이터 → MySQL 적재")
     print("=" * 55)
 
-    csv_path = find_latest("data/processed/parking_scored_*.csv")
+    csv_path = find_latest("data/processed/parking_scored.csv")
     if not csv_path:
-        csv_path = find_latest("data/raw/parking_raw_*.csv")
+        csv_path = find_latest("data/raw/parking_raw.csv")
     if not csv_path or not Path(str(csv_path)).exists():
         print("❌ CSV 파일 없음. 먼저 api/parking_api.py → preprocessing/api_preprocess.py 실행")
         sys.exit(1)

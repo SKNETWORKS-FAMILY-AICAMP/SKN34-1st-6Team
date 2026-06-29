@@ -1,9 +1,11 @@
 """
+api/parking_api.py
+──────────────────
 공영주차장 수집 → data/raw/ 에 CSV 저장
 
 [수집 구조]
-  공영주차장 키 GetParkInfo → 기본정보 + 요금 
-  → CSV 저장 
+  공영주차장 키 GetParkInfo → 기본정보 + 요금 (전체)
+  → CSV 저장 (실시간 현황 컬럼 제외)
 
 실행:
   python api/parking_api.py
@@ -115,6 +117,19 @@ def paged_fetch(service: str, api_key: str) -> list[dict]:
 
 
 # ─────────────────────────────────────────────
+# 운영시간 보정 (null·빈값·0000 → 평일시간으로 대체)
+# ─────────────────────────────────────────────
+def _fix_time(val, fallback: str) -> str:
+    """val이 비어있거나 무효값이면 fallback(평일시간) 반환"""
+    v = str(val).strip() if val not in (None, "") else ""
+    # 숫자만 남겼을 때 0이거나 빈값이면 무효
+    digits = v.replace(":", "").replace(" ", "")
+    if not digits or int(digits) == 0:
+        return fallback
+    return v
+
+
+# ─────────────────────────────────────────────
 # 일반키 기본정보 정규화
 # ─────────────────────────────────────────────
 def normalize_general(row: dict) -> dict:
@@ -129,6 +144,9 @@ def normalize_general(row: dict) -> dict:
         coord_src = "카카오" if lat else ""
         time.sleep(API_DELAY)
 
+    wd_start = _s(row.get("WD_OPER_BGNG_TM"))
+    wd_end   = _s(row.get("WD_OPER_END_TM"))
+
     return {
         "pk_name":       _s(row.get("PKLT_NM")),
         "pk_address":    addr or jibun,
@@ -138,12 +156,12 @@ def normalize_general(row: dict) -> dict:
         "oper_se":       _s(row.get("OPER_SE")),
         "oper_se_nm":    _s(row.get("OPER_SE_NM")),
         "phone":         _s(row.get("TELNO")),
-        "weekday_start": _s(row.get("WD_OPER_BGNG_TM")),
-        "weekday_end":   _s(row.get("WD_OPER_END_TM")),
-        "weekend_start": _s(row.get("WE_OPER_BGNG_TM")),
-        "weekend_end":   _s(row.get("WE_OPER_END_TM")),
-        "holi_start":    _s(row.get("LHLDY_BGNG")),
-        "holi_end":      _s(row.get("LHLDY")),
+        "weekday_start": wd_start,
+        "weekday_end":   wd_end,
+        "weekend_start": _fix_time(row.get("WE_OPER_BGNG_TM"), wd_start),
+        "weekend_end":   _fix_time(row.get("WE_OPER_END_TM"),   wd_end),
+        "holi_start":    _fix_time(row.get("LHLDY_BGNG"),        wd_start),
+        "holi_end":      _fix_time(row.get("LHLDY"),             wd_end),
         "parking_space": _i(row.get("TPKCT")),
         "fee_type":      _s(row.get("CHGD_FREE_NM")),
         "basic_fee":     _f(row.get("PRK_CRG")) or "",

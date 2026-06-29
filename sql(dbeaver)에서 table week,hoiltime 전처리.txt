@@ -1,0 +1,11 @@
+UPDATE parking
+SET
+    weekend_start = CASE WHEN weekend_start IS NULL OR weekend_start = '0000' THEN weekday_start ELSE weekend_start END,
+    weekend_end   = CASE WHEN weekend_end   IS NULL OR weekend_end   = '0000' THEN weekday_end   ELSE weekend_end   END,
+    holi_start    = CASE WHEN holi_start    IS NULL OR holi_start    = '0000' THEN weekday_start ELSE holi_start    END,
+    holi_end      = CASE WHEN holi_end      IS NULL OR holi_end      = '0000' THEN weekday_end   ELSE holi_end      END
+WHERE
+    weekend_start IS NULL OR weekend_start = '0000'
+    OR weekend_end IS NULL OR weekend_end = '0000'
+    OR holi_start  IS NULL OR holi_start  = '0000'
+    OR holi_end    IS NULL OR holi_end    = '0000';
