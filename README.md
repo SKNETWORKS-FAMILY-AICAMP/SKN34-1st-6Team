@@ -85,13 +85,13 @@ python -m venv parking_venv
 Windows
 
 ```bash
-.parking_venv\Scripts\activate
+parking_venv\Scripts\activate
 ```
 
 Mac/Linux
 
 ```bash
-source .venv/bin/activate
+source parking_venv/bin/activate
 ```
 
 ### 4. 라이브러리 설치
