@@ -23,7 +23,7 @@ import pandas as pd             # 데이터 처리 (DataFrame)
 import folium                   # 지도 시각화 라이브러리
 from streamlit_folium import st_folium  # Streamlit에서 folium 출력
 
-from database.select_data import get_all_parking
+from database.select_data_test import get_all_parking
 # → DB 또는 CSV에서 주차장 데이터 가져오는 함수
 
 # =========================
