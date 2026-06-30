@@ -148,7 +148,7 @@ DB_PASSWORD=1234
 
 ---
 
-### 실행
+### 실행과정
 
 ```bash
 streamlit run streamlit/app.py
