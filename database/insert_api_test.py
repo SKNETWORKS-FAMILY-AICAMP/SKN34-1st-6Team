@@ -152,7 +152,7 @@ def insert_parking(conn, rows: list[dict]):
     records = []
     for row in rows:
         pk_code = _s(row.get("pk_code"))
-        if not pk_code or pk_code == "nan":
+        if pk_code in (None, "", "nan", "NaN"):
             raw = row.get("pk_code", "")
             try:
                 pk_code = str(int(float(raw)))
