@@ -106,6 +106,7 @@ pip install -r requirements.txt
 SERVICE_KEY1= 서울시 공공데이터에서 가져온키
 SERVICE_KEY2= 카카오맵 api
 SERVICE_KEY3= 카카오리뷰 크롤링
+SERVICE_KEY4 = 전기차 충전소 API키
 
 DB_HOST=localhost
 DB_PORT=3306
