@@ -30,3 +30,6 @@ Thumbs.db
 # 로그 파일
 *.log__pycache__/
 *.pyc
+parking_venv/
+__pycache__/
+*.pyc
