@@ -2,12 +2,12 @@
 database/insert_review.py
 
 [역할]
-- park_review_1234.csv (clean.py 출력) → parking_review 테이블 적재
+- data/processed/parking_review_crawled.csv → parking_review 테이블 적재
 
 [테이블 컬럼]
 pk_code, rating, review_count, url, review_url, crawled_at
 
-*************[CSV 컬럼 매핑 - clean.py 출력 기준]****************
+[CSV 컬럼 매핑 - clean.py 출력 기준]
 pk_code      → pk_code
 pk_rate      → rating
 pk_review    → review_count
@@ -30,8 +30,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-RAW_DIR       = Path("data/raw")
 PROCESSED_DIR = Path("data/processed")
+CSV_PATH      = PROCESSED_DIR / "parking_review_crawled.csv"
 BATCH         = 500
 
 
@@ -80,20 +80,6 @@ def _url(v) -> str | None:
         return None
     s = str(v).strip()
     return s if s and s.lower() not in ("nan", "none", "", "평가없음", "없음") else None
-
-def find_csv() -> Path | None:
-    patterns = [
-        "park_review_*.csv",
-        # "park1234.csv",
-        "parking_review*.csv",
-        "park[0-9]*.csv"
-    ]
-    for pattern in patterns:
-        for d in [PROCESSED_DIR, RAW_DIR]:
-            files = sorted(d.glob(pattern), key=lambda f: f.stat().st_mtime, reverse=True)
-            if files:
-                return files[0]
-    return None
 
 def batch_execute(conn, sql: str, records: list, label: str):
     total = len(records)
@@ -171,18 +157,17 @@ def insert_review(conn, csv_path: Path):
 # ---------------------------------------------------------
 def main():
     print("=" * 55)
-    print("  ⭐ 카카오맵 리뷰 데이터 → MySQL 적재")
+    print("  ⭐ 리뷰 데이터 → MySQL 적재")
     print("=" * 55)
 
-    csv_path = find_csv()
-    if not csv_path:
-        print("❌ CSV 없음. data/raw/ 또는 data/processed/ 에")
-        print("   park_review_1234.csv 를 넣어주세요.")
+    if not CSV_PATH.exists():
+        print(f"❌ 파일 없음: {CSV_PATH}")
+        print("   clean.py 를 먼저 실행해주세요.")
         return
 
     conn = get_connection()
     try:
-        insert_review(conn, csv_path)
+        insert_review(conn, CSV_PATH)
         print("\n🎉 parking_review 적재 완료!")
     except Exception as e:
         conn.rollback()
