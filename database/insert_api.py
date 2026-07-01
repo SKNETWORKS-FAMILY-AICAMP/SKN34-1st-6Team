@@ -1,14 +1,24 @@
 """
-database/insert_api.py
-───────────────────────
-data/processed/parking_scored_*.csv → DB 3개 테이블 적재
+CSV 전처리 결과 → MySQL 테이블 적재
 
-순서:
-  1. subway_station  지하철역 좌표
-  2. parking         기본정보
-  3. parking_score   난이도 점수 + 혼잡도
+사용 파일
+  data/processed/parking_raw_updated.csv
+    → parking 테이블
+      (주차장 기본정보 + 전기차 충전 가능 여부)
 
-실행:
+  data/processed/parking_scored.csv
+    → subway_station 테이블
+      (지하철역 좌표)
+
+    → parking_score 테이블
+      (난이도 점수 + 역세권 + 혼잡도)
+
+적재 순서
+  1. subway_station
+  2. parking
+  3. parking_score
+
+실행
   python database/insert_api.py
 """
 
