@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\playdata2\Desktop\parking_project\parking_venv"
+set "VIRTUAL_ENV=C:\Users\UK\SKN\SKN34-1st-6Team\parking_venv"
 
 if not defined PROMPT set PROMPT=$P$G
 
