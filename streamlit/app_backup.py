@@ -79,7 +79,12 @@ st.divider()
 # =========================
 # 📋 데이터 테이블 출력
 # =========================
-st.header("")
+st.header("📋 주차장 전체 데이터")
+
+st.dataframe(
+    df,
+    use_container_width=True  # 화면 넓이에 맞게 출력
+)
 
 st.divider()
 
