@@ -118,25 +118,6 @@ CREATE TABLE IF NOT EXISTS `parking_score` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='주차장 난이도 점수'
 """
 
-# ── 4. parking_review ───────────────────────────────────────────
-TABLES["parking_review"] = """
-CREATE TABLE IF NOT EXISTS `parking_review` (
-    `id`            INT             NOT NULL AUTO_INCREMENT,
-    `pk_code`       VARCHAR(30)     NOT NULL    COMMENT '주차장코드(FK)',
-    `review_text`   TEXT            DEFAULT NULL COMMENT '리뷰내용',
-    `rating`        FLOAT           DEFAULT NULL COMMENT '평점',
-    `reviewer`      VARCHAR(100)    DEFAULT NULL COMMENT '작성자',
-    `review_date`   DATETIME        DEFAULT NULL COMMENT '리뷰작성일',
-    `crawled_at`    DATETIME        DEFAULT CURRENT_TIMESTAMP COMMENT '크롤링일시',
-    PRIMARY KEY (`id`),
-    CONSTRAINT `fk_review_parking`
-        FOREIGN KEY (`pk_code`) REFERENCES `parking`(`pk_code`)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    INDEX `idx_pk_code` (`pk_code`),
-    INDEX `idx_rating`  (`rating`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='네이버 리뷰'
-"""
-
 
 def main():
     print("=" * 55)
