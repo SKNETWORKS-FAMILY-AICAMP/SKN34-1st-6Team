@@ -84,8 +84,9 @@ def _url(v) -> str | None:
 def find_csv() -> Path | None:
     patterns = [
         "park_review_*.csv",
-        "park*.csv",
+        # "park1234.csv",
         "parking_review*.csv",
+        "park[0-9]*.csv"
     ]
     for pattern in patterns:
         for d in [PROCESSED_DIR, RAW_DIR]:
