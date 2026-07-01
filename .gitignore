@@ -9,6 +9,8 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
+.Python
 
 # 환경변수 파일
 .env
@@ -26,4 +28,5 @@ Thumbs.db
 
 
 # 로그 파일
-*.log
+*.log__pycache__/
+*.pyc
