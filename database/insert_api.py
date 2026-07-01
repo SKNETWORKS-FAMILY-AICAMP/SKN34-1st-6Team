@@ -2,16 +2,21 @@
 CSV 전처리 결과 → MySQL 테이블 적재
 
 사용 파일
-  data/processed/parking_raw_updated.csv
-    → parking 테이블
-      (주차장 기본정보 + 전기차 충전 가능 여부)
-
   data/processed/parking_scored.csv
     → subway_station 테이블
       (지하철역 좌표)
 
+    → parking 테이블
+      (주차장 기본정보)
+
     → parking_score 테이블
       (난이도 점수 + 역세권 + 혼잡도)
+
+  data/processed/parking_raw_updated_matched.csv (있으면 우선)
+  data/processed/parking_raw_updated.csv (없으면 대신 사용)
+    → parking 테이블의 ev_charge_yn 컬럼
+      (pk_code 기준으로 매칭해서 채워 넣음)
+      
 
 적재 순서
   1. subway_station
@@ -89,6 +94,38 @@ def find_latest(pattern: str) -> Path | None:
                        key=lambda f: f.stat().st_mtime, reverse=True)
     return files[0] if files else None
 
+def load_ev_charge_map() -> dict[str, str]:
+    """
+    pk_code → EV_CHARGE_YN(Y/N) 매핑을 만든다.
+
+    우선순위
+      1. data/processed/parking_raw_updated_matched.csv
+         (ev_charge_match.py + ev_preprocess_matched.py 결과, 주소/좌표 매칭 기반)
+      2. data/processed/parking_raw_updated.csv
+         (기존 ev_preprocess.py 결과, 행 순서 기반)
+
+    두 파일 다 없으면 빈 dict 반환 → parking 테이블은 전부 기본값 'N'으로 적재됨.
+    """
+    ev_path = PROCESSED_DIR / "parking_raw_updated_matched.csv"
+    if not ev_path.exists():
+        ev_path = PROCESSED_DIR / "parking_raw_updated.csv"
+    if not ev_path.exists():
+        print("  ⚠️  EV 충전 정보 파일 없음 → ev_charge_yn은 전부 'N'으로 적재됩니다.")
+        return {}
+
+    print(f"  🔌 EV 충전 정보 입력: {ev_path}")
+
+    ev_map: dict[str, str] = {}
+    with open(ev_path, encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            pk_code = _s(row.get("pk_code"))
+            if not pk_code:
+                continue
+            value = _s(row.get("EV_CHARGE_YN"))
+            ev_map[pk_code] = "Y" if value == "Y" else "N"
+
+    return ev_map
+
 def batch_insert(conn, sql: str, records: list, label: str):
     total = len(records)
     with conn.cursor() as cur:
@@ -156,8 +193,10 @@ def insert_subway(conn, rows: list[dict]) -> dict[str, int]:
 # ─────────────────────────────────────────────
 # 2. parking
 # ─────────────────────────────────────────────
-def insert_parking(conn, rows: list[dict]):
+def insert_parking(conn, rows: list[dict], ev_map: dict[str, str] | None = None):
     print("\n【2】 parking 테이블 적재")
+
+    ev_map = ev_map or {}
 
     records = []
     for row in rows:
@@ -198,7 +237,11 @@ def insert_parking(conn, rows: list[dict]):
             "longitude":     _f(row.get("longitude")),
             "coord_src":     _s(row.get("coord_src")),
             "collected_at":  _dt(row.get("collected_at")),
+            "ev_charge_yn":  ev_map.get(pk_code, "N"),
         })
+
+    matched = sum(1 for r in records if r["ev_charge_yn"] == "Y")
+    print(f"  🔌 ev_charge_yn = 'Y'로 적재될 건수: {matched:,}/{len(records):,}")
 
     sql = """
         INSERT INTO parking (
@@ -206,7 +249,7 @@ def insert_parking(conn, rows: list[dict]):
             oper_se, oper_se_nm, fee_type, parking_space,
             basic_fee, basic_time, extra_fee, extra_time, daily_max_fee, monthly_fee,
             weekday_start, weekday_end, weekend_start, weekend_end, holi_start, holi_end,
-            latitude, longitude, coord_src, collected_at
+            latitude, longitude, coord_src, collected_at, ev_charge_yn
         ) VALUES (
             %(pk_code)s, %(pk_name)s, %(pk_address)s, %(phone)s,
             %(pk_type_cd)s, %(pk_type_nm)s, %(oper_se)s, %(oper_se_nm)s,
@@ -215,7 +258,7 @@ def insert_parking(conn, rows: list[dict]):
             %(daily_max_fee)s, %(monthly_fee)s,
             %(weekday_start)s, %(weekday_end)s, %(weekend_start)s, %(weekend_end)s,
             %(holi_start)s, %(holi_end)s,
-            %(latitude)s, %(longitude)s, %(coord_src)s, %(collected_at)s
+            %(latitude)s, %(longitude)s, %(coord_src)s, %(collected_at)s, %(ev_charge_yn)s
         )
         ON DUPLICATE KEY UPDATE
             pk_name=VALUES(pk_name), pk_address=VALUES(pk_address),
@@ -223,7 +266,7 @@ def insert_parking(conn, rows: list[dict]):
             basic_fee=VALUES(basic_fee), extra_fee=VALUES(extra_fee),
             daily_max_fee=VALUES(daily_max_fee), monthly_fee=VALUES(monthly_fee),
             latitude=VALUES(latitude), longitude=VALUES(longitude),
-            collected_at=VALUES(collected_at)
+            collected_at=VALUES(collected_at), ev_charge_yn=VALUES(ev_charge_yn)
     """
     batch_insert(conn, sql, records, "parking")
 
@@ -319,10 +362,12 @@ def main():
         rows = list(csv.DictReader(f))
     print(f"📊 {len(rows):,}건 로드")
 
+    ev_map = load_ev_charge_map()
+
     conn = get_connection()
     try:
         station_map = insert_subway(conn, rows)
-        insert_parking(conn, rows)
+        insert_parking(conn, rows, ev_map)
         insert_score(conn, rows, station_map)
         print(f"\n🎉 전체 적재 완료!")
     except Exception as e:
