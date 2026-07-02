@@ -6,6 +6,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
 
+# 반드시 다른 st 명령보다 먼저 호출되어야 함
+st.set_page_config(
+    page_title="서울시 공영주차장 분석",
+    page_icon="🅿️",
+    layout="wide",
+)
+
 from utils import apply_common_style, render_car_restriction_sidebar
 
 pg = st.navigation([

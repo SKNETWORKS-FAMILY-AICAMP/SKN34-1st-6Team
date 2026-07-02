@@ -63,13 +63,35 @@ df = load_data()
 
 
 def search_parking(data: pd.DataFrame, query: str) -> pd.DataFrame:
-    """이름 / 주소 / 최근접역명을 통합해서 검색"""
+    """
+    이름 / 주소 / 최근접역명을 통합해서 검색
+    - 역명은 '역' 접미사 유무에 상관없이, 양방향(포함관계)으로 매칭
+      예: 검색어 '강남역' ↔ 데이터 '강남'  → 매칭됨
+          검색어 '강남'   ↔ 데이터 '강남역' → 매칭됨
+    """
     if not query:
         return data
-    cols = [c for c in ["pk_name", "pk_address", "최근접역명"] if c in data.columns]
+
+    query = query.strip()
+    query_norm = query[:-1] if query.endswith("역") else query  # '강남역' -> '강남'
+
     mask = pd.Series(False, index=data.index)
-    for c in cols:
-        mask |= data[c].astype(str).str.contains(query, case=False, na=False)
+
+    # 이름 / 주소는 기존처럼 단순 포함 검색
+    for c in ["pk_name", "pk_address"]:
+        if c in data.columns:
+            mask |= data[c].astype(str).str.contains(query, case=False, na=False)
+
+    # 최근접역명은 '역' 접미사를 떼고 양방향으로 비교 (인접권역 기반 매칭)
+    if "최근접역명" in data.columns:
+        station = data["최근접역명"].astype(str)
+        station_norm = station.str.replace("역", "", regex=False)
+
+        mask |= station.str.contains(query, case=False, na=False)
+        mask |= station_norm.str.contains(query_norm, case=False, na=False)
+        # 데이터 쪽 역명이 검색어보다 짧은 경우(예: 데이터 '강남' vs 검색어 '강남역')도 매칭되도록 반대 방향도 확인
+        mask |= station_norm.apply(lambda s: s != "" and s in query_norm)
+
     return data[mask]
 
 
