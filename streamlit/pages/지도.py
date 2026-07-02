@@ -212,6 +212,7 @@ for _, row in filtered.iterrows():
             "grade_label": GRADE_LABEL.get(grade, ""),
             "color": GRADE_COLOR.get(grade, "#3b82f6"),
             "station": _safe(row.get("최근접역명")),
+            "ev_charge": str(_safe(row.get("전기차충전소여부"), "N")).strip().upper() or "N",
         }
     )
 
@@ -266,6 +267,7 @@ kakao_map_html = f"""
           '<div>면수: ' + (p.space || '-') + '면</div>' +
           '<div>혼잡도: <b style="color:' + p.color + '">' + p.grade + ' · ' + p.grade_label + '</b></div>' +
           (p.station ? '<div>인근역: ' + p.station + '</div>' : '') +
+          '<div>전기차 충전소 여부: <b>' + p.ev_charge + '</b></div>' +
           '</div>';
         infowindow.setContent(content);
         infowindow.open(map, marker);
@@ -298,7 +300,7 @@ st.divider()
 with st.expander("📋 필터링 결과 표로 보기"):
     show_cols = [
         "pk_name", "pk_address", "fee_type", "basic_fee",
-        "parking_space", "난이도등급", "최근접역명",
+        "parking_space", "난이도등급", "최근접역명", "전기차충전소여부",
     ]
     show_cols = [c for c in show_cols if c in filtered.columns]
     st.dataframe(filtered[show_cols], use_container_width=True)
