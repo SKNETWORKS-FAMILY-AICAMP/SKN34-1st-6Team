@@ -266,6 +266,11 @@ kakao_map_html = f"""
           '<div>면수: ' + (p.space || '-') + '면</div>' +
           '<div>혼잡도: <b style="color:' + p.color + '">' + p.grade + ' · ' + p.grade_label + '</b></div>' +
           (p.station ? '<div>인근역: ' + p.station + '</div>' : '') +
+          '<div style="margin-top:10px;">' +
+          '<a href="https://www.google.com/search?q=' + encodeURIComponent(p.name + ' 후기') + '" target="_blank" ' +
+          'style="text-decoration:none; display:block; padding:6px; background:#4285F4; color:white; border-radius:4px; text-align:center; font-size:12px;">' +
+          '🤖 구글 AI 검색하기</a>' +
+          '</div>' + 
           '</div>';
         infowindow.setContent(content);
         infowindow.open(map, marker);

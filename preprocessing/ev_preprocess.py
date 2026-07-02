@@ -7,14 +7,14 @@ ev_preprocess.py
 1. parking_raw_en_charge.csv의 EN_CHARGE_YN 컬럼을 읽는다.
 2. EN_CHARGE_YN 값이 존재하면 'Y', 없으면 'N'으로 변환한다.
 3. 변환한 결과를 parking_raw.csv의 마지막 컬럼(EV_CHARGE_YN)으로 추가한다.
-4. 전처리된 데이터를 parking_raw_updated.csv로 저장한다.
+4. 전처리된 데이터를 parking_processed.csv로 저장한다.
 
 입력 파일
 - data/raw/parking_raw.csv
 - data/raw/parking_raw_en_charge.csv
 
 출력 파일
-- data/processed/parking_raw_updated.csv
+- data/processed/parking_processed.csv
 """
 
 import os
@@ -35,7 +35,7 @@ OUTPUT_PATH = os.path.join(
     BASE_DIR,
     "data",
     "processed",
-    "parking_raw_updated.csv"
+    "parking_processed.csv"
 )
 
 
