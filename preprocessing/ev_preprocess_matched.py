@@ -9,8 +9,8 @@ preprocessing/ev_preprocess.py 의 입력 파일만
 무엇이 다른가 (ev_preprocess.py 대비)
 - CHARGE_RAW_PATH : data/raw/parking_raw_en_charge.csv (기존, 행 순서 가정)
                     → data/raw/parking_raw_en_charge_matched.csv (신규, ev_charge_match.py의 결과)
-- OUTPUT_PATH      : data/processed/parking_raw_updated.csv (기존)
-                    → data/processed/parking_raw_updated_matched.csv (신규, 기존 결과 파일을 덮어쓰지 않도록 파일명 분리)
+- OUTPUT_PATH      : data/processed/parking_processed.csv (기존)
+                    → data/processed/parking_processed_matched.csv (신규, 기존 결과 파일을 덮어쓰지 않도록 파일명 분리)
 - 나머지 로직(EV_CHARGE_YN 생성 규칙, 저장 방식 등)은 ev_preprocess.py와 완전히 동일합니다.
 
 처리 과정
@@ -18,18 +18,18 @@ preprocessing/ev_preprocess.py 의 입력 파일만
    (이 파일은 ev_charge_match.py가 주소/좌표 매칭으로 만든 결과)
 2. EN_CHARGE_YN 값이 존재하면 'Y', 없으면 'N'으로 변환한다.
 3. 변환한 결과를 parking_raw.csv의 마지막 컬럼(EV_CHARGE_YN)으로 추가한다.
-4. 전처리된 데이터를 parking_raw_updated_matched.csv로 저장한다.
+4. 전처리된 데이터를 parking_processed_matched.csv로 저장한다.
 
 실행 순서
 1) ev_charge_match.py 실행 → data/raw/parking_raw_en_charge_matched.csv 생성
-2) 이 파일(ev_preprocess_matched.py) 실행 → data/processed/parking_raw_updated_matched.csv 생성
+2) 이 파일(ev_preprocess_matched.py) 실행 → data/processed/parking_proc_matched.csv 생성
 
 입력 파일
 - data/raw/parking_raw.csv
 - data/raw/parking_raw_en_charge_matched.csv
 
 출력 파일
-- data/processed/parking_raw_updated_matched.csv
+- data/processed/parking_processed_matched.csv
 """
 
 import os
@@ -54,7 +54,7 @@ OUTPUT_PATH = os.path.join(
     BASE_DIR,
     "data",
     "processed",
-    "parking_raw_updated_matched.csv"
+    "parking_processed_matched.csv"
 )
 
 

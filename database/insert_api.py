@@ -12,8 +12,8 @@ CSV 전처리 결과 → MySQL 테이블 적재
     → parking_score 테이블
       (난이도 점수 + 역세권 + 혼잡도)
 
-  data/processed/parking_raw_updated_matched.csv (있으면 우선)
-  data/processed/parking_raw_updated.csv (없으면 대신 사용)
+  data/processed/parking_processed_matched.csv (있으면 우선)
+  data/processed/parking_processed.csv (없으면 대신 사용)
     → parking 테이블의 ev_charge_yn 컬럼
       (pk_code 기준으로 매칭해서 채워 넣음)
       
@@ -99,16 +99,16 @@ def load_ev_charge_map() -> dict[str, str]:
     pk_code → EV_CHARGE_YN(Y/N) 매핑을 만든다.
 
     우선순위
-      1. data/processed/parking_raw_updated_matched.csv
+      1. data/processed/parking_processed_matched.csv
          (ev_charge_match.py + ev_preprocess_matched.py 결과, 주소/좌표 매칭 기반)
-      2. data/processed/parking_raw_updated.csv
+      2. data/processed/parking_raw_processed.csv
          (기존 ev_preprocess.py 결과, 행 순서 기반)
 
     두 파일 다 없으면 빈 dict 반환 → parking 테이블은 전부 기본값 'N'으로 적재됨.
     """
-    ev_path = PROCESSED_DIR / "parking_raw_updated_matched.csv"
+    ev_path = PROCESSED_DIR / "parking_processed_matched.csv"
     if not ev_path.exists():
-        ev_path = PROCESSED_DIR / "parking_raw_updated.csv"
+        ev_path = PROCESSED_DIR / "parking_raw_processed.csv"
     if not ev_path.exists():
         print("  ⚠️  EV 충전 정보 파일 없음 → ev_charge_yn은 전부 'N'으로 적재됩니다.")
         return {}
