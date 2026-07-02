@@ -299,25 +299,30 @@ if "selected_pk_name" not in st.session_state:
 
 show_cols = [
     "pk_code", "pk_name", "pk_address", "fee_type", "basic_fee",
-    "parking_space", "난이도등급", "최근접역명",
+    "parking_space", "난이도등급", "최근접역명", "전기차충전소여부",
 ]
 show_cols = [c for c in show_cols if c in base_df.columns]
 
 col_rename = {
-    "pk_code":       "코드",
-    "pk_name":       "주차장명",
-    "pk_address":    "주소",
-    "fee_type":      "요금유형",
-    "basic_fee":     "기본요금",
-    "parking_space": "주차면수",
-    "난이도등급":    "난이도",
-    "최근접역명":    "인근 지하철역",
+    "pk_code":         "코드",
+    "pk_name":         "주차장명",
+    "pk_address":      "주소",
+    "fee_type":        "요금유형",
+    "basic_fee":       "기본요금",
+    "parking_space":   "주차면수",
+    "난이도등급":      "난이도",
+    "최근접역명":      "인근 지하철역",
+    "전기차충전소여부": "전기차충전소여부",
 }
 
 table_df = base_df[show_cols].rename(columns=col_rename).reset_index(drop=True)
+if "전기차충전소여부" in table_df.columns:
+    table_df["전기차충전소여부"] = (
+        table_df["전기차충전소여부"].fillna("N").astype(str).str.upper().replace({"": "N"})
+    )
 
-ROW_COL_WIDTHS = [1, 2, 3, 1.2, 1, 1, 1, 1.5]
-ROW_HEADERS = ["", "주차장명", "주소", "요금유형", "기본요금", "주차면수", "난이도", "인근 지하철역"]
+ROW_COL_WIDTHS = [1, 2, 3, 1.2, 1, 1, 1, 1.5, 1.3]
+ROW_HEADERS = ["", "주차장명", "주소", "요금유형", "기본요금", "주차면수", "난이도", "인근 지하철역", "전기차충전소여부"]
 
 
 def render_table_row(row, key_suffix):
@@ -340,6 +345,7 @@ def render_table_row(row, key_suffix):
     row_cols[5].write(row.get("주차면수", "-"))
     row_cols[6].write(row.get("난이도", "-"))
     row_cols[7].write(row.get("인근 지하철역", "-"))
+    row_cols[8].write(row.get("전기차충전소여부", "N"))
 
 
 if st.session_state.selected_pk_code:

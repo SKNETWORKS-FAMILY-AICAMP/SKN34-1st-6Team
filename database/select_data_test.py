@@ -126,6 +126,7 @@ def get_parking_with_score():
         p.weekend_end,
         p.latitude,
         p.longitude,
+        p.ev_charge_yn           AS 전기차충전소여부,
         p.collected_at,
         s.nearest_station_name  AS 최근접역명,
         s.nearest_station_line  AS 최근접역호선,

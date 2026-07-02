@@ -281,7 +281,7 @@ def render_car_restriction_sidebar():
         car_number = st.text_input(
             "번호판 끝 4자리",
             max_chars=4,
-            placeholder="예: 2312",
+            placeholder="예: 1234",
             label_visibility="collapsed",
             key="car_last4_input",
         )
