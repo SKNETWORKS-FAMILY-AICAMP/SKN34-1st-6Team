@@ -86,9 +86,11 @@ def get_parking_by_fee(max_fee):
     return df
 
 
+
 # ---------------------------------------------------------
 # 4. parking + parking_score 조인 데이터 조회
 # ---------------------------------------------------------
+
 def get_parking_with_score():
     """
     [역할]
@@ -137,6 +139,51 @@ def get_parking_with_score():
         s.we_afternoon, s.we_evening, s.we_night
     FROM parking p
     LEFT JOIN parking_score s ON p.pk_code = s.pk_code
+    """
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
+
+# ---------------------------------------------------------
+# 5. parking + parking_score + parking_review 조인
+# ---------------------------------------------------------
+def get_parking_with_review():
+    """
+    [역할]
+    - parking + parking_score + parking_review 3개 테이블 조인
+    - 별점/리뷰건수/URL 포함
+    [사용처]
+    - 분석 페이지, 혼잡도 페이지
+    [Return]
+    - pandas.DataFrame
+    """
+    conn = get_connection()
+    query = """
+    SELECT
+        p.pk_code,
+        p.pk_name,
+        p.pk_address,
+        p.fee_type,
+        p.parking_space,
+        p.basic_fee,
+        p.latitude,
+        p.longitude,
+        s.nearest_station_name  AS 최근접역명,
+        s.difficulty_grade      AS 난이도등급,
+        s.difficulty_score      AS 난이도점수,
+        s.in_subway_radius      AS 역세권여부,
+        s.wd_dawn, s.wd_morning, s.wd_forenoon,
+        s.wd_afternoon, s.wd_evening, s.wd_night,
+        s.we_dawn, s.we_morning, s.we_forenoon,
+        s.we_afternoon, s.we_evening, s.we_night,
+        r.rating                AS 별점,
+        r.review_count          AS 리뷰수,
+        r.url                   AS 카카오URL,
+        r.review_url            AS 리뷰URL
+    FROM parking p
+    LEFT JOIN parking_score  s ON p.pk_code = s.pk_code
+    LEFT JOIN parking_review r ON p.pk_code = r.pk_code
     """
     df = pd.read_sql(query, conn)
     conn.close()

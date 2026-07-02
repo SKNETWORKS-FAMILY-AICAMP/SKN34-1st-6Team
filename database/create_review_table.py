@@ -18,23 +18,24 @@ import pymysql
 from config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
 
-CREATE_REVIEW_SUMMARY = """
+CREATE_PARKING_REVIEW = """
 CREATE TABLE IF NOT EXISTS `parking_review` (
-    `id`            INT             NOT NULL AUTO_INCREMENT,
-    `pk_code`       VARCHAR(30)     NOT NULL            COMMENT '주차장코드(FK)',
-    `rating`        DECIMAL(3,1)    DEFAULT NULL        COMMENT '별점 평균 (0.0 ~ 5.0)',
-    `review_count`  INT             DEFAULT NULL        COMMENT '리뷰 건수',
-    `url`           VARCHAR(500)    DEFAULT NULL        COMMENT '리뷰 페이지 URL',
-    `crawled_at`    DATETIME        DEFAULT CURRENT_TIMESTAMP COMMENT '크롤링 일시',
+    `id`           INT          NOT NULL AUTO_INCREMENT,
+    `pk_code`      VARCHAR(30)  NOT NULL                  COMMENT '주차장코드(FK)',
+    `rating`       DECIMAL(3,1) DEFAULT NULL              COMMENT '별점 평균 (0.0 ~ 5.0)',
+    `review_count` INT          DEFAULT NULL              COMMENT '리뷰 건수',
+    `url`          VARCHAR(500) DEFAULT NULL              COMMENT '리뷰 페이지 URL',
+    `review_url`   VARCHAR(500) DEFAULT NULL              COMMENT '카카오맵_후기_URL',
+    `crawled_at`   DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '크롤링 일시',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_pk_code` (`pk_code`),
-    CONSTRAINT `fk_review_parking`
+    CONSTRAINT `fk_parking_review`
         FOREIGN KEY (`pk_code`)
         REFERENCES `parking` (`pk_code`)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    INDEX `idx_rating`  (`rating`),
-    INDEX `idx_count`   (`review_count`)
+    INDEX `idx_rating` (`rating`),
+    INDEX `idx_count`  (`review_count`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='주차장별 리뷰 요약 (별점/건수/URL)'
 """
@@ -52,7 +53,7 @@ def main():
     )
     try:
         with conn.cursor() as cur:
-            cur.execute(CREATE_REVIEW_SUMMARY)
+            cur.execute(CREATE_PARKING_REVIEW)
             print("✅ 테이블 생성: `parking_review`")
         conn.commit()
         print(f"\n🎉 완료! DBeaver에서 {DB_NAME} 새로고침(F5)하세요.")

@@ -2,14 +2,17 @@
 database/insert_review.py
 
 [역할]
-- 크롤링된 리뷰 요약 CSV → parking_review_summary 테이블 적재
+- data/processed/parking_review_crawled.csv → parking_review 테이블 적재
 
-[입력 CSV 컬럼]
-pk_code (또는 pk_name), rating, review_count, url
+[테이블 컬럼]
+pk_code, rating, review_count, url, review_url, crawled_at
 
-[실행 순서]
-1. python database/create_review_table.py   (테이블 생성)
-2. python database/insert_review.py          (데이터 적재)  ← 이 파일
+[CSV 컬럼 매핑 - clean.py 출력 기준]
+pk_code      → pk_code
+pk_rate      → rating
+pk_review    → review_count
+pk_url       → url
+pk_reviewurl → review_url
 
 [실행]
 python database/insert_review.py
@@ -27,9 +30,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-RAW_DIR       = Path("data/raw")
 PROCESSED_DIR = Path("data/processed")
-BATCH = 500
+CSV_PATH      = PROCESSED_DIR / "parking_review_crawled.csv"
+BATCH         = 500
 
 
 # ---------------------------------------------------------
@@ -41,7 +44,7 @@ def get_connection():
         port     = int(os.getenv("DB_PORT", 3306)),
         user     = os.getenv("DB_USER"),
         password = os.getenv("DB_PASSWORD"),
-        db       = os.getenv("DB_NAME"),
+        database = os.getenv("DB_NAME"),
         charset  = "utf8mb4",
         autocommit = False,
     )
@@ -50,38 +53,33 @@ def get_connection():
 # ---------------------------------------------------------
 # 유틸
 # ---------------------------------------------------------
-def _s(v) -> str | None:
-    if v is None or str(v).strip() in ("", "nan", "None"):
-        return None
-    return str(v).strip()
-
-def _f(v) -> float | None:
+def _pk_code(v) -> str | None:
     try:
-        return round(float(v), 1)
+        return str(int(float(str(v).strip())))
     except (TypeError, ValueError):
         return None
 
-def _i(v) -> int | None:
+def _rating(v) -> float | None:
+    """0.0 → None(평가없음), 나머지 → float"""
     try:
-        return int(float(v))
+        val = round(float(str(v).strip()), 1)
+        return val if val > 0 else None
     except (TypeError, ValueError):
         return None
 
-def _dt(v) -> datetime | None:
-    if not v or str(v).strip() in ("", "nan"):
-        return None
+def _review_count(v) -> int | None:
+    """0 → None, 나머지 → int"""
     try:
-        return datetime.strptime(str(v).strip()[:19], "%Y-%m-%d %H:%M:%S")
-    except ValueError:
+        val = int(float(str(v).strip()))
+        return val if val > 0 else None
+    except (TypeError, ValueError):
         return None
 
-def find_latest(pattern: str) -> Path | None:
-    """RAW_DIR 또는 PROCESSED_DIR에서 최신 파일 탐색"""
-    for d in [PROCESSED_DIR, RAW_DIR]:
-        files = sorted(d.glob(pattern), key=lambda f: f.stat().st_mtime, reverse=True)
-        if files:
-            return files[0]
-    return None
+def _url(v) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s if s and s.lower() not in ("nan", "none", "", "평가없음", "없음") else None
 
 def batch_execute(conn, sql: str, records: list, label: str):
     total = len(records)
@@ -95,68 +93,63 @@ def batch_execute(conn, sql: str, records: list, label: str):
 
 
 # ---------------------------------------------------------
-# pk_name → pk_code 매핑 (이름으로 크롤링한 경우)
+# 리뷰 적재
 # ---------------------------------------------------------
-def get_name_to_code_map(conn) -> dict[str, str]:
-    """parking 테이블에서 pk_name → pk_code 매핑 딕셔너리 반환"""
-    with conn.cursor() as cur:
-        cur.execute("SELECT pk_code, pk_name FROM parking")
-        return {row[1]: row[0] for row in cur.fetchall()}
-
-
-# ---------------------------------------------------------
-# 리뷰 요약 적재
-# ---------------------------------------------------------
-def insert_review_summary(conn, csv_path: Path, name_to_code: dict):
-    print(f"\n【리뷰 요약 적재】")
+def insert_review(conn, csv_path: Path):
+    print(f"\n【parking_review 적재】")
     print(f"  📂 입력: {csv_path}")
 
     with open(csv_path, encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))
 
-    print(f"  📊 {len(rows):,}건 로드")
+    print(f"  📊 전체: {len(rows):,}건 로드")
 
-    records = []
-    skipped = 0
+    records    = []
+    skipped    = 0
+    has_review = 0
+    no_review  = 0
 
     for row in rows:
-        # pk_code 가 직접 있으면 그대로, 없으면 pk_name으로 매핑
-        pk_code = _s(row.get("pk_code"))
-        if not pk_code:
-            pk_name = _s(row.get("pk_name") or row.get("name") or row.get("주차장명"))
-            pk_code = name_to_code.get(pk_name) if pk_name else None
-
+        pk_code = _pk_code(row.get("pk_code"))
         if not pk_code:
             skipped += 1
             continue
 
+        rating       = _rating(row.get("pk_rate"))
+        review_count = _review_count(row.get("pk_review"))
+
+        if rating or review_count:
+            has_review += 1
+        else:
+            no_review += 1
+
         records.append({
             "pk_code":      pk_code,
-            "rating":       _f(row.get("rating") or row.get("별점")),
-            "review_count": _i(row.get("review_count") or row.get("리뷰건수")),
-            "url":          _s(row.get("url") or row.get("URL")),
-            "crawled_at":   _dt(row.get("crawled_at")) or datetime.now(),
+            "rating":       rating,
+            "review_count": review_count,
+            "url":          _url(row.get("pk_url")),
+            "review_url":   _url(row.get("pk_reviewurl")),
+            "crawled_at":   datetime.now(),
         })
 
+    print(f"  ⭐ 별점/리뷰 있음: {has_review}곳 / 평가없음: {no_review}곳")
     if skipped:
-        print(f"  ⚠️  pk_code 매핑 실패: {skipped}건 건너뜀")
-
-    if not records:
-        print("  ❌ 적재할 데이터 없음")
-        return
+        print(f"  ⚠️  pk_code 변환 실패 건너뜀: {skipped}건")
 
     sql = """
-        INSERT INTO parking_review_summary
-            (pk_code, rating, review_count, url, crawled_at)
+        INSERT INTO parking_review
+            (pk_code, rating, review_count, url, review_url, crawled_at)
         VALUES
-            (%(pk_code)s, %(rating)s, %(review_count)s, %(url)s, %(crawled_at)s)
+            (%(pk_code)s, %(rating)s, %(review_count)s,
+             %(url)s, %(review_url)s, %(crawled_at)s)
         ON DUPLICATE KEY UPDATE
             rating       = VALUES(rating),
             review_count = VALUES(review_count),
             url          = VALUES(url),
+            review_url   = VALUES(review_url),
             crawled_at   = VALUES(crawled_at)
     """
-    batch_execute(conn, sql, records, "parking_review_summary")
+    batch_execute(conn, sql, records, "parking_review")
 
 
 # ---------------------------------------------------------
@@ -164,26 +157,18 @@ def insert_review_summary(conn, csv_path: Path, name_to_code: dict):
 # ---------------------------------------------------------
 def main():
     print("=" * 55)
-    print("  ⭐ 리뷰 요약 데이터 → MySQL 적재")
+    print("  ⭐ 리뷰 데이터 → MySQL 적재")
     print("=" * 55)
 
-    # ── CSV 파일 탐색 ──
-    # 파일명 패턴: review_*.csv 또는 parking_review*.csv
-    csv_path = find_latest("review_*.csv") or find_latest("parking_review*.csv")
-
-    if not csv_path:
-        print("❌ 리뷰 CSV 파일 없음.")
-        print("   data/raw/ 또는 data/processed/ 에 review_*.csv 파일을 넣어주세요.")
+    if not CSV_PATH.exists():
+        print(f"❌ 파일 없음: {CSV_PATH}")
+        print("   clean.py 를 먼저 실행해주세요.")
         return
 
     conn = get_connection()
     try:
-        name_to_code = get_name_to_code_map(conn)
-        print(f"  📋 주차장 매핑 로드: {len(name_to_code):,}개")
-
-        insert_review_summary(conn, csv_path, name_to_code)
-        print("\n🎉 리뷰 데이터 적재 완료!")
-
+        insert_review(conn, CSV_PATH)
+        print("\n🎉 parking_review 적재 완료!")
     except Exception as e:
         conn.rollback()
         print(f"\n❌ 오류: {e}")

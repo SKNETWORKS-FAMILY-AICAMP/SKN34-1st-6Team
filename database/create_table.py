@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS `parking` (
     `latitude`          DECIMAL(10,7)   DEFAULT NULL        COMMENT '위도',
     `longitude`         DECIMAL(10,7)   DEFAULT NULL        COMMENT '경도',
     `coord_src`         VARCHAR(10)     DEFAULT NULL        COMMENT '좌표출처',
+    `ev_charge_yn`      CHAR(1)         DEFAULT 'N'         COMMENT '전기차 충전 가능 여부(Y/N)',
     `collected_at`      DATETIME        DEFAULT NULL        COMMENT '수집일시',
     PRIMARY KEY (`pk_code`),
     INDEX `idx_address`   (`pk_address`(100)),
